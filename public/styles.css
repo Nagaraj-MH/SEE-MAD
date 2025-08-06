@@ -706,3 +706,120 @@ form {
   font-weight: 500;
   min-width: 50px;
 }
+.install-btn {
+  padding: 0.5rem 1rem;
+  background: var(--primary-gradient);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.install-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.install-btn.installed {
+  background: var(--success);
+  cursor: default;
+}
+
+.install-btn.installed:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .install-btn {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+/* Install modal styles */
+.install-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.install-modal-content {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: min(400px, 90vw);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.install-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.install-modal-header h3 {
+  margin: 0;
+  color: var(--text);
+}
+
+.close-install-modal {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.close-install-modal:hover {
+  color: var(--text);
+}
+
+.install-instructions {
+  padding: 1.5rem;
+  color: var(--text-secondary);
+}
+
+.install-instructions h4 {
+  color: var(--primary);
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.install-instructions h4:first-child {
+  margin-top: 0;
+}
+
+.install-instructions ol {
+  margin-left: 1rem;
+  margin-bottom: 1rem;
+}
+
+.install-instructions li {
+  margin-bottom: 0.25rem;
+  line-height: 1.5;
+}

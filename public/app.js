@@ -385,3 +385,171 @@ regForm.onsubmit = async (e) => {
     alert(err.message);
   }
 };
+// PWA Install functionality
+let deferredPrompt;
+const installBtn = document.getElementById("installBtn");
+
+// Listen for the beforeinstallprompt event
+window.addEventListener("beforeinstallprompt", (e) => {
+  console.log("beforeinstallprompt fired");
+
+  // Prevent the mini-infobar from appearing on mobile
+  e.preventDefault();
+
+  // Save the event so it can be triggered later
+  deferredPrompt = e;
+
+  // Show the install button
+  installBtn.classList.remove("hidden");
+});
+
+// Handle install button click
+installBtn.addEventListener("click", async () => {
+  if (!deferredPrompt) {
+    // If no prompt available, show manual instructions
+    showManualInstallInstructions();
+    return;
+  }
+
+  // Show the install prompt
+  deferredPrompt.prompt();
+
+  // Wait for the user to respond to the prompt
+  const { outcome } = await deferredPrompt.userChoice;
+
+  if (outcome === "accepted") {
+    console.log("User accepted the install prompt");
+    showInstallSuccess();
+  } else {
+    console.log("User dismissed the install prompt");
+  }
+
+  // Clear the deferredPrompt
+  deferredPrompt = null;
+});
+
+// Listen for app installation
+window.addEventListener("appinstalled", (e) => {
+  console.log("App was installed");
+  hideInstallButton();
+  showInstallSuccess();
+});
+
+// Check if app is already installed
+function checkIfInstalled() {
+  // Check if running in standalone mode
+  if (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true
+  ) {
+    hideInstallButton();
+    return true;
+  }
+  return false;
+}
+
+// Hide install button
+function hideInstallButton() {
+  installBtn.classList.add("hidden");
+}
+
+// Show install success message
+function showInstallSuccess() {
+  installBtn.textContent = "✅ App Installed";
+  installBtn.classList.add("installed");
+
+  setTimeout(() => {
+    hideInstallButton();
+  }, 3000);
+}
+
+// Show manual install instructions
+function showManualInstallInstructions() {
+  const instructions = getInstallInstructions();
+
+  // Create modal for instructions
+  const modal = document.createElement("div");
+  modal.className = "install-modal";
+  modal.innerHTML = `
+    <div class="install-modal-content">
+      <div class="install-modal-header">
+        <h3>Install Notes PWA</h3>
+        <button class="close-install-modal">&times;</button>
+      </div>
+      <div class="install-instructions">
+        ${instructions}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Close modal functionality
+  modal.querySelector(".close-install-modal").onclick = () => {
+    document.body.removeChild(modal);
+  };
+
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      document.body.removeChild(modal);
+    }
+  };
+}
+
+// Get device-specific install instructions
+function getInstallInstructions() {
+  const userAgent = navigator.userAgent.toLowerCase();
+
+  if (userAgent.includes("chrome") && !userAgent.includes("edg")) {
+    return `
+      <h4>Chrome (Desktop):</h4>
+      <ol>
+        <li>Click the install icon in the address bar</li>
+        <li>Or go to Menu → Install Notes PWA</li>
+      </ol>
+      <h4>Chrome (Mobile):</h4>
+      <ol>
+        <li>Tap Menu (⋮) → Add to Home screen</li>
+        <li>Confirm by tapping "Add"</li>
+      </ol>
+    `;
+  } else if (userAgent.includes("firefox")) {
+    return `
+      <h4>Firefox (Desktop):</h4>
+      <ol>
+        <li>Click the install icon in the address bar</li>
+        <li>Or go to Menu → Install this site as an app</li>
+      </ol>
+    `;
+  } else if (userAgent.includes("safari")) {
+    return `
+      <h4>Safari (iPhone/iPad):</h4>
+      <ol>
+        <li>Tap the Share button</li>
+        <li>Scroll down and tap "Add to Home Screen"</li>
+        <li>Tap "Add" to confirm</li>
+      </ol>
+    `;
+  } else if (userAgent.includes("edg")) {
+    return `
+      <h4>Microsoft Edge:</h4>
+      <ol>
+        <li>Click the install icon in the address bar</li>
+        <li>Or go to Menu → Apps → Install this site as an app</li>
+      </ol>
+    `;
+  } else {
+    return `
+      <h4>General Instructions:</h4>
+      <ol>
+        <li>Look for an install or "Add to Home Screen" option in your browser menu</li>
+        <li>The exact location varies by browser and device</li>
+      </ol>
+    `;
+  }
+}
+
+// Initialize install functionality
+document.addEventListener("DOMContentLoaded", () => {
+  checkIfInstalled();
+});
