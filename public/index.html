@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Notes PWA</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <!-- ── AUTH SCREENS ── -->
+    <section id="auth">
+      <h1>Notes</h1>
+
+      <form id="loginForm" autocomplete="off">
+        <h2>Login</h2>
+        <input type="email" id="loginEmail" placeholder="Email" required />
+        <input
+          type="password"
+          id="loginPassword"
+          placeholder="Password"
+          required
+          minlength="6"
+        />
+        <button type="submit">Sign in</button>
+        <p class="switcher" data-target="register">
+          No account? <span>Register</span>
+        </p>
+      </form>
+
+      <form id="regForm" class="hidden" autocomplete="off">
+        <h2>Register</h2>
+        <input
+          type="text"
+          id="regUsername"
+          placeholder="Username"
+          required
+          minlength="3"
+        />
+        <input type="email" id="regEmail" placeholder="Email" required />
+        <input
+          type="password"
+          id="regPassword"
+          placeholder="Password"
+          required
+          minlength="6"
+        />
+        <button type="submit">Create account</button>
+        <p class="switcher" data-target="login">
+          Have an account? <span>Login</span>
+        </p>
+      </form>
+    </section>
+
+    <!-- ── NOTES UI ── -->
+    <section id="app" class="hidden">
+      <header>
+        <h1>My Notes</h1>
+        <button id="logoutBtn">Logout</button>
+      </header>
+
+      <form id="noteForm">
+        <input id="noteTitle" placeholder="Title" required maxlength="100" />
+        <textarea
+          id="noteContent"
+          placeholder="Write your note…"
+          required
+        ></textarea>
+        <input id="noteTags" placeholder="Tags (comma separated)" />
+        <button type="submit">Save</button>
+      </form>
+
+      <input id="search" placeholder="Search notes…" />
+      <ul id="notesList"></ul>
+    </section>
+    <!-- Edit Note Modal -->
+    <div id="editModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Edit Note</h2>
+          <span class="close-btn" onclick="closeEditModal()">&times;</span>
+        </div>
+        <form id="editNoteForm">
+          <input
+            id="editNoteTitle"
+            placeholder="Note title..."
+            required
+            maxlength="100"
+          />
+          <textarea
+            id="editNoteContent"
+            placeholder="Start writing your note..."
+            required
+          ></textarea>
+          <input id="editNoteTags" placeholder="Tags (comma separated)" />
+          <div class="modal-actions">
+            <button type="button" onclick="closeEditModal()" class="cancel-btn">
+              Cancel
+            </button>
+            <button type="submit" class="save-btn">Update Note</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>
