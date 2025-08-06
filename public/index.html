@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Notes PWA</title>
+    <link rel="shortcut icon" href="icons/icon-96.png" type="image/x-icon" />
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="styles.css" />
     <script defer src="app.js"></script>
@@ -29,8 +30,9 @@
         </p>
       </form>
 
+      <!-- In your registration form -->
       <form id="regForm" class="hidden" autocomplete="off">
-        <h2>Register</h2>
+        <h2>Create account</h2>
         <input
           type="text"
           id="regUsername"
@@ -39,16 +41,41 @@
           minlength="3"
         />
         <input type="email" id="regEmail" placeholder="Email" required />
-        <input
-          type="password"
-          id="regPassword"
-          placeholder="Password"
-          required
-          minlength="6"
-        />
-        <button type="submit">Create account</button>
+
+        <!-- Enhanced password field -->
+        <div class="password-container">
+          <input
+            type="password"
+            id="regPassword"
+            placeholder="Password"
+            required
+            minlength="8"
+          />
+          <div class="password-strength">
+            <div class="strength-bar">
+              <div class="strength-fill"></div>
+            </div>
+            <span class="strength-text">Weak</span>
+          </div>
+        </div>
+
+        <!-- Password requirements -->
+        <div class="password-requirements">
+          <h4>Password must contain:</h4>
+          <ul>
+            <li id="req-length" class="requirement">At least 8 characters</li>
+            <li id="req-upper" class="requirement">One uppercase letter</li>
+            <li id="req-lower" class="requirement">One lowercase letter</li>
+            <li id="req-number" class="requirement">One number</li>
+            <li id="req-special" class="requirement">
+              One special character (!@#$%^&*)
+            </li>
+          </ul>
+        </div>
+
+        <button type="submit">Sign up</button>
         <p class="switcher" data-target="login">
-          Have an account? <span>Login</span>
+          Already have an account? <span>Sign in</span>
         </p>
       </form>
     </section>
@@ -57,7 +84,10 @@
     <section id="app" class="hidden">
       <header>
         <h1>My Notes</h1>
-        <button id="logoutBtn">Logout</button>
+        <div class="user-info">
+          <span id="usernameDisplay"></span>
+          <button id="logoutBtn">Logout</button>
+        </div>
       </header>
 
       <form id="noteForm">

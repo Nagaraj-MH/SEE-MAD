@@ -254,14 +254,134 @@ async function delNote(id) {
 
 /* --- APP INITIALISATION --- */
 async function initApp() {
-  // verify token
   try {
-    await fetchJSON(`${API}/auth/profile`);
+    const res = await fetchJSON(`${API}/auth/profile`);
+
+    // Show the app
     authSection.classList.add("hidden");
     appSection.classList.remove("hidden");
+
+    // Display username
+    const usernameDisplay = document.getElementById("usernameDisplay");
+    if (usernameDisplay && res.data && res.data.username) {
+      usernameDisplay.textContent = `Hello, ${res.data.username}`;
+    }
+
     loadNotes();
   } catch {
     localStorage.removeItem(LS_TOKEN);
   }
 }
+
 initApp();
+// Password validation function
+function validatePassword(password) {
+  const requirements = {
+    length: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    number: /\d/.test(password),
+    special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>?]/.test(password),
+  };
+
+  return requirements;
+}
+
+// Calculate password strength
+function getPasswordStrength(password) {
+  const requirements = validatePassword(password);
+  const validCount = Object.values(requirements).filter(Boolean).length;
+
+  if (validCount <= 1) return "weak";
+  if (validCount <= 2) return "fair";
+  if (validCount <= 4) return "good";
+  return "strong";
+}
+
+// Update password strength indicator
+function updatePasswordStrength(password) {
+  const requirements = validatePassword(password);
+  const strength = getPasswordStrength(password);
+
+  // Update requirement checkmarks
+  document
+    .getElementById("req-length")
+    .classList.toggle("valid", requirements.length);
+  document
+    .getElementById("req-upper")
+    .classList.toggle("valid", requirements.upper);
+  document
+    .getElementById("req-lower")
+    .classList.toggle("valid", requirements.lower);
+  document
+    .getElementById("req-number")
+    .classList.toggle("valid", requirements.number);
+  document
+    .getElementById("req-special")
+    .classList.toggle("valid", requirements.special);
+
+  // Update strength meter
+  const strengthBar = document.querySelector(".password-strength");
+  const strengthText = document.querySelector(".strength-text");
+  const passwordInput = document.getElementById("regPassword");
+
+  // Remove all strength classes
+  strengthBar.className = "password-strength";
+  passwordInput.classList.remove("valid", "invalid");
+
+  // Add current strength class
+  strengthBar.classList.add(`strength-${strength}`);
+
+  // Update text
+  const strengthTexts = {
+    weak: "Weak",
+    fair: "Fair",
+    good: "Good",
+    strong: "Strong",
+  };
+  strengthText.textContent = strengthTexts[strength];
+
+  // Add validation class to input
+  const allValid = Object.values(requirements).every(Boolean);
+  passwordInput.classList.toggle("valid", allValid);
+  passwordInput.classList.toggle("invalid", password.length > 0 && !allValid);
+
+  return allValid;
+}
+
+// Add event listener for real-time validation
+document.getElementById("regPassword").addEventListener("input", (e) => {
+  updatePasswordStrength(e.target.value);
+});
+
+// Update registration form validation
+regForm.onsubmit = async (e) => {
+  e.preventDefault();
+
+  const password = document.getElementById("regPassword").value;
+  const requirements = validatePassword(password);
+  const isValidPassword = Object.values(requirements).every(Boolean);
+
+  if (!isValidPassword) {
+    alert("Please ensure your password meets all requirements.");
+    return;
+  }
+
+  try {
+    const body = {
+      username: document.getElementById("regUsername").value,
+      email: document.getElementById("regEmail").value,
+      password: password,
+    };
+
+    const res = await fetchJSON(`${API}/auth/register`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+
+    localStorage.setItem(LS_TOKEN, res.data.token);
+    initApp();
+  } catch (err) {
+    alert(err.message);
+  }
+};

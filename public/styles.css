@@ -500,3 +500,209 @@ form {
     max-width: 100%;
   }
 }
+/* User info in header */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+#usernameDisplay {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* Password container */
+.password-container {
+  position: relative;
+}
+
+/* Strength meter */
+.password-strength {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  background: #ef4444;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.strength-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  min-width: 60px;
+}
+
+/* Strength levels */
+.strength-weak .strength-fill {
+  width: 25%;
+  background: #ef4444;
+}
+
+.strength-fair .strength-fill {
+  width: 50%;
+  background: #f59e0b;
+}
+
+.strength-good .strength-fill {
+  width: 75%;
+  background: #eab308;
+}
+
+.strength-strong .strength-fill {
+  width: 100%;
+  background: #10b981;
+}
+
+/* Password requirements */
+.password-requirements {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.password-requirements h4 {
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.password-requirements ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.requirement {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 0.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.requirement::before {
+  content: "✗";
+  color: #ef4444;
+  font-weight: bold;
+  width: 12px;
+}
+
+.requirement.valid {
+  color: var(--text);
+}
+
+.requirement.valid::before {
+  content: "✓";
+  color: #10b981;
+}
+
+/* Input validation states */
+#regPassword.valid {
+  border-color: #10b981;
+}
+
+#regPassword.invalid {
+  border-color: #ef4444;
+}
+/* Fix password container sizing */
+.password-container {
+  position: relative;
+  width: 100%;
+  min-height: auto;
+}
+
+/* Ensure password input has same size as other inputs */
+#regPassword {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  margin-bottom: 0.5rem; /* Space for strength meter */
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+/* Adjust form to accommodate password requirements */
+#auth form {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2.5rem;
+  width: min(450px, 90vw); /* Slightly wider to accommodate requirements */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Make password requirements more compact */
+.password-requirements {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+}
+
+.password-requirements h4 {
+  font-size: 0.8rem;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+
+.requirement {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  padding: 0.15rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Compact strength meter */
+.password-strength {
+  margin-top: 0.3rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-text {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  min-width: 50px;
+}
