@@ -823,3 +823,22 @@ form {
   margin-bottom: 0.25rem;
   line-height: 1.5;
 }
+.pending-sync {
+  color: #f59e0b;
+  font-size: 0.8em;
+  margin-left: 0.5em;
+}
+.pending-sync {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.note.pending {
+  border-left-color: #f59e0b;
+  opacity: 0.9;
+}

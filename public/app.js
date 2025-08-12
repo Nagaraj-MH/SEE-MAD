@@ -111,40 +111,60 @@ logoutBtn.onclick = () => {
 noteForm.onsubmit = async (e) => {
   e.preventDefault();
 
-  try {
-    const body = {
-      title: document.getElementById("noteTitle").value,
-      content: document.getElementById("noteContent").value,
-      tags: document
-        .getElementById("noteTags")
-        .value.split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-    };
+  const note = {
+    title: document.getElementById("noteTitle").value,
+    content: document.getElementById("noteContent").value,
+    tags: document
+      .getElementById("noteTags")
+      .value.split(",")
+      .map((t) => t.trim())
+      .filter(Boolean),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    isPinned: false,
+  };
 
-    if (window.editingNoteId) {
-      // Update existing note
-      await fetchJSON(`${API}/notes/${window.editingNoteId}`, {
-        method: "PUT",
-        body: JSON.stringify(body),
-      });
-
-      // Reset editing state
-      window.editingNoteId = null;
-      document.querySelector('#noteForm button[type="submit"]').textContent =
-        "Save";
-    } else {
-      // Create new note
-      await fetchJSON(`${API}/notes`, {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
+  // Check if we're offline or if the server is unreachable
+  if (!navigator.onLine) {
+    console.log("Offline detected - saving note locally");
+    try {
+      await saveNoteLocally(note);
+      alert(
+        "You are offline. Note saved locally and will sync when back online."
+      );
+      loadNotes(); // Refresh the notes display
+      noteForm.reset();
+      return;
+    } catch (err) {
+      console.error("Error saving note locally:", err);
+      alert("Error saving note offline: " + err.message);
+      return;
     }
+  }
 
-    noteForm.reset();
+  // Try to save online first
+  try {
+    await fetchJSON(`${API}/notes`, {
+      method: "POST",
+      body: JSON.stringify(note),
+    });
     loadNotes();
+    noteForm.reset();
   } catch (err) {
-    alert("Error saving note: " + err.message);
+    console.error("Online save failed, trying offline save:", err);
+
+    // If online save fails, fall back to offline save
+    try {
+      await saveNoteLocally(note);
+      alert(
+        "Server unavailable. Note saved locally and will sync when connection is restored."
+      );
+      loadNotes();
+      noteForm.reset();
+    } catch (offlineErr) {
+      console.error("Both online and offline save failed:", offlineErr);
+      alert("Error saving note: " + err.message);
+    }
   }
 };
 
@@ -153,28 +173,33 @@ searchInput.oninput = () => loadNotes();
 /* --- RENDERERS --- */
 function renderNotes(data) {
   notesList.innerHTML = "";
-  if (!data.length) {
+  if (!data || !data.length) {
     notesList.innerHTML = "<p>No notes.</p>";
     return;
   }
+
   data.forEach((n) => {
     const li = document.createElement("li");
-    li.className = "note";
+    li.className = `note ${n.pending ? "pending" : ""}`;
     li.innerHTML = `
-      <span class="note-pin" data-id="${n._id}">${
+      <span class="note-pin" data-id="${n._id || "local"}">${
       n.isPinned ? "📌" : "📍"
     }</span>
-      <span class="edit-btn" data-id="${n._id}">✏️</span>
-      <span class="del-btn" data-id="${n._id}">🗑️</span>
+      <span class="edit-btn" data-id="${n._id || "local"}">✏️</span>
+      <span class="del-btn" data-id="${n._id || "local"}">🗑️</span>
       <h3>${n.title}</h3>
       <p>${n.content.slice(0, 140)}${n.content.length > 140 ? "…" : ""}</p>
       <div class="tags">${n.tags.join(", ")}</div>
       <time>${new Date(n.updatedAt).toLocaleString()}</time>
+      ${n.pending ? '<span class="pending-sync">Pending Sync</span>' : ""}
     `;
 
-    li.querySelector(".note-pin").onclick = () => togglePin(n._id);
-    li.querySelector(".edit-btn").onclick = () => editNote(n); // Opens modal
-    li.querySelector(".del-btn").onclick = () => delNote(n._id);
+    // Only add click handlers for synced notes
+    if (!n.pending) {
+      li.querySelector(".note-pin").onclick = () => togglePin(n._id);
+      li.querySelector(".edit-btn").onclick = () => editNote(n);
+      li.querySelector(".del-btn").onclick = () => delNote(n._id);
+    }
 
     notesList.appendChild(li);
   });
@@ -255,13 +280,32 @@ document.addEventListener("keydown", (e) => {
 
 async function loadNotes() {
   try {
-    const q = searchInput.value.trim();
-    const res = await fetchJSON(
-      `${API}/notes${q ? `?search=${encodeURIComponent(q)}` : ""}`
-    );
-    renderNotes(res.data);
+    // Try to get notes from server
+    let serverNotes = [];
+    if (navigator.onLine) {
+      try {
+        const res = await fetchJSON(`${API}/notes`);
+        serverNotes = res.data || [];
+      } catch (err) {
+        console.log("Server notes unavailable, using local only");
+      }
+    }
+
+    // Get local unsynced notes
+    const localNotes = await getLocalNotes();
+
+    // Combine and render
+    const allNotes = [
+      ...localNotes.map((n) => ({ ...n, pending: true })),
+      ...serverNotes,
+    ];
+
+    renderNotes(allNotes);
   } catch (err) {
-    console.error(err);
+    console.error("Error loading notes:", err);
+    // Fall back to local notes only
+    const localNotes = await getLocalNotes();
+    renderNotes(localNotes.map((n) => ({ ...n, pending: true })));
   }
 }
 
@@ -577,3 +621,93 @@ function getInstallInstructions() {
 document.addEventListener("DOMContentLoaded", () => {
   checkIfInstalled();
 });
+// Simple IndexedDB helper for unsynced notes
+const DB_NAME = "notesPWA";
+const DB_VERSION = 1;
+const STORE_NAME = "unsyncedNotes";
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      req.result.createObjectStore(STORE_NAME, {
+        keyPath: "localId",
+        autoIncrement: true,
+      });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveNoteLocally(note) {
+  const db = await openDB();
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  tx.objectStore(STORE_NAME).add(note);
+  return tx.complete || tx.done;
+}
+
+async function getLocalNotes() {
+  const db = await openDB();
+  const tx = db.transaction(STORE_NAME, "readonly");
+  const store = tx.objectStore(STORE_NAME);
+  return new Promise((resolve, reject) => {
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function clearLocalNotes() {
+  const db = await openDB();
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  tx.objectStore(STORE_NAME).clear();
+  return tx.complete || tx.done;
+}
+async function syncNotes() {
+  if (!navigator.onLine) {
+    console.log("Still offline, skipping sync");
+    return;
+  }
+
+  console.log("Attempting to sync unsynced notes...");
+
+  try {
+    const unsynced = await getLocalNotes();
+    console.log("Found unsynced notes:", unsynced.length);
+
+    if (unsynced.length === 0) return;
+
+    let syncedCount = 0;
+
+    for (const note of unsynced) {
+      try {
+        console.log("Syncing note:", note.title);
+        await fetchJSON(`${API}/notes`, {
+          method: "POST",
+          body: JSON.stringify(note),
+        });
+        syncedCount++;
+      } catch (err) {
+        console.warn("Failed to sync note:", note.title, err);
+        // Stop syncing on first failure to avoid overwhelming the server
+        break;
+      }
+    }
+
+    if (syncedCount === unsynced.length) {
+      // All notes synced successfully
+      await clearLocalNotes();
+      console.log("All notes synced successfully");
+      loadNotes(); // Refresh to show server versions
+    } else {
+      console.log(`Synced ${syncedCount}/${unsynced.length} notes`);
+    }
+  } catch (err) {
+    console.error("Sync process failed:", err);
+  }
+}
+
+// Try to sync when app loads and whenever connection is restored
+window.addEventListener("online", syncNotes);
+document.addEventListener("DOMContentLoaded", syncNotes);
